@@ -38,7 +38,9 @@ def snowflake_options():
     account = required_env("SNOWFLAKE_ACCOUNT")
     url = os.getenv("SNOWFLAKE_URL")
     if not url:
-        url = account if account.startswith("http") else f"{account}.snowflakecomputing.com"
+        url = account
+        if not url.startswith(("http://", "https://")) and "snowflakecomputing.com" not in url:
+            url = f"{url}.snowflakecomputing.com"
     url = url.removeprefix("https://").removeprefix("http://").rstrip("/")
     options = {
         "sfURL": url,
