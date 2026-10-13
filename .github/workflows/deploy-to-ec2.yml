@@ -10,7 +10,7 @@ permissions:
 env:
   AWS_REGION: us-east-1
   EC2_INSTANCE_ID: i-06ea3e388448b991c
-  APP_DIR: /opt/capitalone_marketing_model
+  APP_DIR: /opt/capitalone_marketing_model2
   REPO_URL: https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git
 
 jobs:
@@ -80,10 +80,10 @@ jobs:
               "set -euo pipefail",
               "export HOME=/root",
               "if ! command -v git >/dev/null 2>&1; then echo 'Git is not installed on EC2'; exit 1; fi",
-              "mkdir -p /opt/capitalone_marketing_model",
-              "git config --global --add safe.directory /opt/capitalone_marketing_model",
+              "mkdir -p /opt/capitalone_marketing_model2",
+              "git config --global --add safe.directory /opt/capitalone_marketing_model2",
               "cd /opt/capitalone_marketing_model",
-              "if [ -d .git ]; then git remote set-url origin https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git; git fetch origin main; git reset --hard origin/main; else find /opt/capitalone_marketing_model -mindepth 1 -maxdepth 1 -exec rm -rf {} +; git clone https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git .; fi",
+              "if [ -d .git ]; then git remote set-url origin https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git; git fetch origin main; git reset --hard origin/main; else find /opt/capitalone_marketing_model2 -mindepth 1 -maxdepth 1 -exec rm -rf {} +; git clone https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git .; fi",
               "echo '===== DISK SPACE BEFORE INSTALL ====='",
               "df -h / /opt /tmp || true",
               "df -i / /opt /tmp || true",
@@ -91,8 +91,8 @@ jobs:
               "mkdir -p /opt/capitalone_marketing_model",
               "if [ -d .venv ]; then echo 'Reusing existing virtual environment'; else python3 -m venv .venv; fi",
               "export PIP_NO_CACHE_DIR=1",
-              "rm -rf /opt/capitalone_marketing_model/.pip-tmp",
-              "export TMPDIR=/opt/capitalone_marketing_model/.pip-tmp TMP=/opt/capitalone_marketing_model/.pip-tmp TEMP=/opt/capitalone_marketing_model/.pip-tmp",
+              "rm -rf /opt/capitalone_marketing_model2/.pip-tmp",
+              "export TMPDIR=/opt/capitalone_marketing_model2/.pip-tmp TMP=/opt/capitalone_marketing_model2/.pip-tmp TEMP=/opt/capitalone_marketing_model2/.pip-tmp",
               "mkdir -p \"$TMPDIR\" && chmod 700 \"$TMPDIR\"",
               ".venv/bin/python -m pip install --no-cache-dir --upgrade pip",
               ".venv/bin/pip install --no-cache-dir -r requirements.txt",
@@ -162,8 +162,8 @@ jobs:
             "commands": [
               "set -e",
               "export HOME=/root",
-              "git config --global --add safe.directory /opt/capitalone_marketing_model",
-              "cd /opt/capitalone_marketing_model",
+              "git config --global --add safe.directory /opt/capitalone_marketing_model2",
+              "cd /opt/capitalone_marketing_model2",
               "echo REMOTE=$(git remote get-url origin)",
               "echo COMMIT=$(git rev-parse --short HEAD)",
               "ls -la jobs",
