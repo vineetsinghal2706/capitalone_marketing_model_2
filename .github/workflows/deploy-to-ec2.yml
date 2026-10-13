@@ -14,7 +14,7 @@ env:
   AWS_REGION: us-east-1
   EC2_INSTANCE_ID: i-06ea3e388448b991c
   APP_DIR: /opt/capitalone_marketing_model
-  REPO_URL: https://github.com/vineetsinghal2706/capitalone_marketing_model_1.git
+  REPO_URL: https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git
 
 jobs:
   validate:
@@ -86,7 +86,7 @@ jobs:
               "mkdir -p /opt/capitalone_marketing_model",
               "git config --global --add safe.directory /opt/capitalone_marketing_model",
               "cd /opt/capitalone_marketing_model",
-              "if [ -d .git ]; then git remote set-url origin https://github.com/vineetsinghal2706/capitalone_marketing_model_1.git; git fetch origin main; git reset --hard origin/main; else find /opt/capitalone_marketing_model -mindepth 1 -maxdepth 1 -exec rm -rf {} +; git clone https://github.com/vineetsinghal2706/capitalone_marketing_model_1.git .; fi",
+              "if [ -d .git ]; then git remote set-url origin https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git; git fetch origin main; git reset --hard origin/main; else find /opt/capitalone_marketing_model -mindepth 1 -maxdepth 1 -exec rm -rf {} +; git clone https://github.com/vineetsinghal2706/capitalone_marketing_model_2.git .; fi",
               "echo '===== DISK SPACE BEFORE INSTALL ====='",
               "df -h / /opt",
               "rm -rf /root/.cache/pip",
@@ -111,7 +111,7 @@ jobs:
           DEPLOY_COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$EC2_INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploy capitalone_marketing_model_1 to EC2" \
+            --comment "Deploy capitalone_marketing_model_2 to EC2" \
             --parameters file:///tmp/deploy-parameters.json \
             --query "Command.CommandId" \
             --output text \
@@ -202,5 +202,5 @@ jobs:
       - name: Deployment completed
         run: |
           echo "Code deployed to EC2 successfully."
-          echo "Repository: capitalone_marketing_model_1"
+          echo "Repository: capitalone_marketing_model_2"
           echo "Docker and ECR are not used by this workflow."
