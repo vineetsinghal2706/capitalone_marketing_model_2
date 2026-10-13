@@ -1,5 +1,6 @@
 # Capital One Marketing Model — Local Airflow, EC2 PySpark, No Glue
 
+
 Local Airflow orchestrates the pipeline. Extraction, preprocessing, and batch scoring run on the EC2 instance via AWS Systems Manager (SSM). Snowflake credentials are stored in a root-protected environment file on EC2; the local Airflow DAG sends a command, not the credentials.
 
 ## Architecture
