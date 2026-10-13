@@ -91,6 +91,7 @@ jobs:
               "mkdir -p /opt/capitalone_marketing_model",
               "if [ -d .venv ]; then echo 'Reusing existing virtual environment'; else python3 -m venv .venv; fi",
               "export PIP_NO_CACHE_DIR=1",
+              "rm -rf /opt/capitalone_marketing_model/.pip-tmp",
               "export TMPDIR=/opt/capitalone_marketing_model/.pip-tmp TMP=/opt/capitalone_marketing_model/.pip-tmp TEMP=/opt/capitalone_marketing_model/.pip-tmp",
               "mkdir -p \"$TMPDIR\" && chmod 700 \"$TMPDIR\"",
               ".venv/bin/python -m pip install --no-cache-dir --upgrade pip",
