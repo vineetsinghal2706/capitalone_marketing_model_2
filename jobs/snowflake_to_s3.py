@@ -18,7 +18,7 @@ SNOWFLAKE_QUERY = """
     FROM INGEST_DATA.PUBLIC.CUSTOMERS
     WHERE CUSTOMER_ID IS NOT NULL
 """
-DEFAULT_SPARK_PACKAGE = "net.snowflake:spark-snowflake_2.12:3.1.4-spark_3.5"
+DEFAULT_SPARK_PACKAGE = "net.snowflake:spark-snowflake_2.12:3.2.2-spark_3.5"
 
 
 def get_args():
