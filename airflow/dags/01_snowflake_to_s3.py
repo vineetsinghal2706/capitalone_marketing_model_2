@@ -45,7 +45,7 @@ chmod 700 {SPARK_TMP_DIR}
 export TMPDIR={SPARK_TMP_DIR}
 export SPARK_LOCAL_DIRS={SPARK_TMP_DIR}
 export SPARK_TMP_DIR={SPARK_TMP_DIR}
-export SPARK_SUBMIT_OPTS="${SPARK_SUBMIT_OPTS:-} -Djava.io.tmpdir={SPARK_TMP_DIR}"
+export SPARK_SUBMIT_OPTS="${{SPARK_SUBMIT_OPTS:-}} -Djava.io.tmpdir={SPARK_TMP_DIR}"
 
 export AWS_DEFAULT_REGION={AWS_REGION}
 RUN_DATE="{{{{ dag_run.conf.get('run_date', ds) }}}}"
