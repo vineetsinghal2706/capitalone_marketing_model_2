@@ -27,9 +27,11 @@ def test_synthetic_sample_score_regression():
     fixture = _fixture()
     expected_cases = [case for case in fixture["cases"] if isinstance(case.get("expected"), dict)]
     if not expected_cases:
-        pytest.skip(
-            "No approved reference scores checked in yet; see "
-            "tests/fixtures/score_parity.json"
+        pytest.fail(
+            "No approved reference scores checked in yet. Populate each case's "
+            "'expected' object in tests/fixtures/score_parity.json using the "
+            "trusted reference scorer. Deployment is blocked until sample-score "
+            "validation can actually be performed."
         )
     if len(expected_cases) != len(fixture["cases"]):
         pytest.fail("Each sample case must have approved expected outputs before deployment.")
