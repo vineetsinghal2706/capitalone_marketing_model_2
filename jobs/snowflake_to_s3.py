@@ -1,8 +1,8 @@
 """Extract Snowflake data with the Spark Snowflake connector and publish Parquet to S3.
 
 Runs on EC2 in Spark local mode; it does not require AWS Glue or S3A Hadoop jars.
-The EC2 instance role supplies S3 permissions. Snowflake credentials are read from
-environment variables and must not be committed to the repository.
+The EC2 instance role supplies S3 permissions and reads Snowflake credentials from
+AWS Secrets Manager at runtime. Credentials must not be committed to the repository.
 
 Spark's temporary files and local Parquet output are placed on disk-backed
 /var/tmp/spark-tmp rather than a small RAM-backed /tmp (tmpfs).
@@ -38,39 +38,92 @@ def required_env(name):
     return value
 
 
-def configure_spark_temp_dir():
-    """Move Spark/JVM/Python temporary files onto the disk-backed root filesystem."""
-    Path(SPARK_TMP_DIR).mkdir(parents=True, exist_ok=True)
+def _secret_value(secret, *names, required=True, default=None):
+    """Read a secret field accepting common uppercase/lowercase key conventions."""
+    for name in names:
+        value = secret.get(name)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    if required:
+        # Deliberately don't include secret contents or credential values in errors.
+        raise RuntimeError(
+            "Snowflake Secrets Manager secret is missing a required field. "
+            f"Expected one of: {', '.join(names)}"
+        )
+    return default
 
-    # PySpark's launcher and Python's tempfile module read these before Spark starts.
-    os.environ["TMPDIR"] = SPARK_TMP_DIR
-    os.environ["SPARK_LOCAL_DIRS"] = SPARK_TMP_DIR
 
-    # Ensure the Java process uses the disk-backed temporary directory too.
-    java_tmp_option = f"-Djava.io.tmpdir={SPARK_TMP_DIR}"
-    submit_opts = os.environ.get("SPARK_SUBMIT_OPTS", "").strip()
-    if java_tmp_option not in submit_opts:
-        os.environ["SPARK_SUBMIT_OPTS"] = f"{submit_opts} {java_tmp_option}".strip()
+def load_snowflake_secret():
+    """Fetch and parse the existing Snowflake secret without logging its contents."""
+    secret_id = required_env("SNOWFLAKE_SECRET_ID")
+    region = os.getenv("AWS_REGION") or os.getenv("AWS_DEFAULT_REGION")
+    client_kwargs = {"region_name": region} if region else {}
+    client = boto3.client("secretsmanager", **client_kwargs)
+
+    try:
+        response = client.get_secret_value(SecretId=secret_id)
+    except Exception as exc:
+        # Do not print the SDK response or secret data; keep the failure actionable.
+        error_code = getattr(exc, "response", {}).get("Error", {}).get("Code", "unknown")
+        raise RuntimeError(
+            "Unable to retrieve Snowflake secret from AWS Secrets Manager "
+            f"(error code: {error_code}). Check the secret ID, region, IAM policy, "
+            "and any customer-managed KMS key permissions."
+        ) from exc
+
+    secret_string = response.get("SecretString")
+    if not secret_string:
+        raise RuntimeError(
+            "Snowflake secret must use SecretString containing a JSON object."
+        )
+
+    import json
+
+    try:
+        secret = json.loads(secret_string)
+    except (TypeError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            "Snowflake secret must contain valid JSON in SecretString."
+        ) from exc
+    if not isinstance(secret, dict):
+        raise RuntimeError("Snowflake secret JSON must be an object.")
+
+    return secret
 
 
 def snowflake_options():
-    account = required_env("SNOWFLAKE_ACCOUNT")
-    url = os.getenv("SNOWFLAKE_URL")
-    if not url:
-        url = account
-        if not url.startswith(("http://", "https://")) and "snowflakecomputing.com" not in url:
-            url = f"{url}.snowflakecomputing.com"
+    secret = load_snowflake_secret()
+    account = _secret_value(
+        secret, "account", "SNOWFLAKE_ACCOUNT", "snowflake_account", "url", "SNOWFLAKE_URL"
+    )
+    url = _secret_value(
+        secret, "url", "SNOWFLAKE_URL", required=False, default=account
+    )
+    if not url.startswith(("http://", "https://")) and "snowflakecomputing.com" not in url:
+        url = f"{url}.snowflakecomputing.com"
     url = url.removeprefix("https://").removeprefix("http://").rstrip("/")
+
     options = {
         "sfURL": url,
-        "sfUser": required_env("SNOWFLAKE_USER"),
-        "sfPassword": required_env("SNOWFLAKE_PASSWORD"),
-        "sfDatabase": os.getenv("SNOWFLAKE_DATABASE", "INGEST_DATA"),
-        "sfSchema": os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC"),
-        "sfWarehouse": required_env("SNOWFLAKE_WAREHOUSE"),
+        "sfUser": _secret_value(secret, "username", "user", "SNOWFLAKE_USER", "SNOWFLAKE_USERNAME"),
+        "sfPassword": _secret_value(secret, "password", "SNOWFLAKE_PASSWORD"),
+        "sfDatabase": _secret_value(
+            secret, "database", "SNOWFLAKE_DATABASE", required=False,
+            default=os.getenv("SNOWFLAKE_DATABASE", "INGEST_DATA")
+        ),
+        "sfSchema": _secret_value(
+            secret, "schema", "SNOWFLAKE_SCHEMA", required=False,
+            default=os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
+        ),
+        "sfWarehouse": _secret_value(
+            secret, "warehouse", "SNOWFLAKE_WAREHOUSE"
+        ),
         "query": os.getenv("SNOWFLAKE_QUERY", SNOWFLAKE_QUERY).strip(),
     }
-    role = os.getenv("SNOWFLAKE_ROLE")
+    role = _secret_value(
+        secret, "role", "SNOWFLAKE_ROLE", required=False,
+        default=os.getenv("SNOWFLAKE_ROLE")
+    )
     if role:
         options["sfRole"] = role
     return options
