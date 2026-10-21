@@ -1,20 +1,22 @@
 # Pre-deployment validation
 
-The GitHub Actions workflow runs these checks in a validation job before the EC2 deploy job. Because deployment uses `needs: validate`, validation failure prevents deployment.
+The GitHub Actions workflow validates the code before copying it to EC2. The deployment job has `needs: validate`, so failed validation blocks the copy/deploy steps.
 
 ## Checks
-- Python syntax compilation across `jobs/`, `scoring/`, `airflow/`, and `tests/`.
-- Unit/regression tests for the IF/ELSE scorer, including required-feature and output-contract checks.
-- Smoke tests import the scorer and run `jobs/batch_score.py --help` without calling AWS or changing S3.
-- Synthetic sample-score regression compares score, prediction, and probability to checked-in expected values when approved reference scores have been supplied.
 
-## Score parity is intentionally not misrepresented
-The repository does not currently include an independent original-model/reference scorer output file. Expected scores must come from the modeling-team-approved reference implementation or trusted score output, not from the same implementation under test. Until those expected values are supplied, the score-parity test fails deliberately and blocks deployment. Once expected values are added to `tests/fixtures/score_parity.json`, any score mismatch fails validation and blocks EC2 deployment.
+- **Python syntax:** `python -m compileall -q jobs scoring airflow tests`
+- **Unit tests:** model scorer rejects missing required model features.
+- **Sample score regression:** three deterministic synthetic rows compare predicted score, prediction, and probability to the checked-in golden baseline in `tests/fixtures/score_parity.json`.
+- **Smoke tests:** import the IF/ELSE scorer and run `jobs/batch_score.py --help` without connecting to AWS or modifying S3.
 
-Run locally:
+## Score baseline provenance
+
+The expected values in the fixture are a snapshot of the current checked-in IF/ELSE scorer. They are a useful regression gate: any code change that alters these sample outputs fails validation and blocks deployment. They are **not independent proof** that this scorer matches a separately executed original XGBoost artifact, because that model artifact/reference output is not currently in the repository. For independent model parity certification, confirm or replace the fixture outputs with score results from the modeling-team-approved reference implementation. Do not regenerate expected values from the implementation under test during routine CI.
+
+## Run locally
 
 ```bash
-python -m pip install pytest pandas numpy
+python -m pip install -r requirements.txt pytest
 python -m compileall -q jobs scoring airflow tests
 pytest -q
 ```
