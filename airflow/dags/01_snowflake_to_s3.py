@@ -31,8 +31,6 @@ with DAG(
             "Parameters": {
                 "commands": [
                     f"""set -eu
-test -r /etc/capitalone-marketing.env || {{ echo "Snowflake environment file is missing or unreadable" >&2; exit 1; }}
-. /etc/capitalone-marketing.env
 
 cd {APP_DIR}
 test -x .venv/bin/python
@@ -48,6 +46,8 @@ export SPARK_TMP_DIR={SPARK_TMP_DIR}
 export SPARK_SUBMIT_OPTS="${{SPARK_SUBMIT_OPTS:-}} -Djava.io.tmpdir={SPARK_TMP_DIR}"
 
 export AWS_DEFAULT_REGION={AWS_REGION}
+export AWS_REGION={AWS_REGION}
+export SNOWFLAKE_SECRET_ID="{{{{ var.value.snowflake_secret_id }}}}"
 RUN_DATE="{{{{ dag_run.conf.get('run_date', ds) }}}}"
 
 echo "Starting Snowflake-to-S3 extraction for $RUN_DATE on EC2"
