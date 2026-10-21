@@ -7,7 +7,7 @@ The GitHub Actions workflow validates the code before copying it to EC2. The dep
 - **Python syntax:** `python -m compileall -q jobs scoring airflow tests`
 - **Unit tests:** model scorer rejects missing required model features.
 - **Sample score regression:** three deterministic synthetic rows compare predicted score, prediction, and probability to the checked-in golden baseline in `tests/fixtures/score_parity.json`.
-- **Smoke tests:** import the IF/ELSE scorer and run `jobs/batch_score.py --help` without connecting to AWS or modifying S3.
+- **Smoke tests:** import the IF/ELSE scorer and run `--help` for extraction, preprocessing, and batch-scoring entry points without connecting to AWS or modifying S3.
 
 ## Score baseline provenance
 
