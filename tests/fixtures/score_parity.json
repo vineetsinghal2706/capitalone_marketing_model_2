@@ -1,0 +1,64 @@
+{
+  "fixture_type": "synthetic_score_regression",
+  "description": "Synthetic input rows for score regression. The repository currently has no independent reference outputs from the original XGBoost model. Populate each expected object from the approved reference implementation; do not generate expected values using scoring/score_if_else.py itself.",
+  "probability_tolerance": 1e-12,
+  "cases": [
+    {
+      "name": "low_credit_high_risk",
+      "features": {
+        "age": 28, "annual_income": 36000, "tenure_months": 12, "credit_score": 510,
+        "existing_products": 1, "monthly_spend": 500, "avg_monthly_balance": 250,
+        "digital_txn_ratio": 0.1, "mobile_logins_30d": 2, "branch_visits_6m": 4,
+        "web_visits_30d": 3, "credit_utilization": 0.95, "delinquency_12m": 3,
+        "marketing_contacts_90d": 8, "days_since_last_txn": 180, "campaign_month": 1,
+        "campaign_quarter": 1, "campaign_dayofweek": 2, "campaign_is_weekend": 0,
+        "campaign_month_sin": 0.5, "campaign_month_cos": 0.8660254, "log_income": 10.49,
+        "log_monthly_spend": 6.22, "log_avg_balance": 5.52, "log_web_visits": 1.39,
+        "spend_to_income": 0.167, "balance_to_income": 0.083, "digital_engagement": 0.06,
+        "channel_engagement": 5, "product_penetration": 0.923, "delinquency_rate": 0.25,
+        "contact_pressure": 2.667, "high_value_customer": 0, "digital_customer": 0,
+        "credit_risk_flag": 1, "income_x_credit_score": 183.6, "digital_x_spend": 50,
+        "tenure_x_products": 12
+      },
+      "expected": null
+    },
+    {
+      "name": "mid_credit_moderate_activity",
+      "features": {
+        "age": 43, "annual_income": 82000, "tenure_months": 72, "credit_score": 680,
+        "existing_products": 3, "monthly_spend": 4200, "avg_monthly_balance": 12500,
+        "digital_txn_ratio": 0.45, "mobile_logins_30d": 24, "branch_visits_6m": 5,
+        "web_visits_30d": 16, "credit_utilization": 0.42, "delinquency_12m": 1,
+        "marketing_contacts_90d": 3, "days_since_last_txn": 45, "campaign_month": 6,
+        "campaign_quarter": 2, "campaign_dayofweek": 4, "campaign_is_weekend": 0,
+        "campaign_month_sin": 0.0, "campaign_month_cos": -1.0, "log_income": 11.3145,
+        "log_monthly_spend": 8.3428, "log_avg_balance": 9.4335, "log_web_visits": 2.8332,
+        "spend_to_income": 0.6146, "balance_to_income": 1.8293, "digital_engagement": 0.3238,
+        "channel_engagement": 40, "product_penetration": 0.4286, "delinquency_rate": 0.0833,
+        "contact_pressure": 1, "high_value_customer": 0, "digital_customer": 0,
+        "credit_risk_flag": 0, "income_x_credit_score": 557.6, "digital_x_spend": 1890,
+        "tenure_x_products": 216
+      },
+      "expected": null
+    },
+    {
+      "name": "high_credit_high_engagement",
+      "features": {
+        "age": 61, "annual_income": 165000, "tenure_months": 132, "credit_score": 790,
+        "existing_products": 5, "monthly_spend": 12300, "avg_monthly_balance": 58000,
+        "digital_txn_ratio": 0.88, "mobile_logins_30d": 62, "branch_visits_6m": 1,
+        "web_visits_30d": 34, "credit_utilization": 0.12, "delinquency_12m": 0,
+        "marketing_contacts_90d": 2, "days_since_last_txn": 8, "campaign_month": 9,
+        "campaign_quarter": 3, "campaign_dayofweek": 5, "campaign_is_weekend": 0,
+        "campaign_month_sin": -1.0, "campaign_month_cos": 0.0, "log_income": 12.0137,
+        "log_monthly_spend": 9.4174, "log_avg_balance": 10.9682, "log_web_visits": 3.5553,
+        "spend_to_income": 0.8945, "balance_to_income": 4.2182, "digital_engagement": 0.8325,
+        "channel_engagement": 96, "product_penetration": 0.4386, "delinquency_rate": 0.0,
+        "contact_pressure": 0.667, "high_value_customer": 1, "digital_customer": 1,
+        "credit_risk_flag": 0, "income_x_credit_score": 1303.5, "digital_x_spend": 10824,
+        "tenure_x_products": 660
+      },
+      "expected": null
+    }
+  ]
+}
