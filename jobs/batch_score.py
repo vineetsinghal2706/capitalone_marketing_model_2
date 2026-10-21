@@ -10,19 +10,34 @@ from datetime import datetime, timezone
 # The venv exposes both lib/ and lib64/ site-packages; loading both registers
 # the request-header provider twice and duplicates x-mlflow-sm-tracking-server-arn.
 # Remove the lib/ path before importing MLflow so only lib64/ is used.
-_duplicate_site_packages = os.path.abspath(
-    os.path.join(
-        sys.prefix,
-        "lib",
-        f"python{sys.version_info.major}.{sys.version_info.minor}",
-        "site-packages",
-    )
+_site_packages_version = (
+    f"python{sys.version_info.major}.{sys.version_info.minor}"
 )
-sys.path[:] = [
-    entry
+_duplicate_site_packages = os.path.abspath(
+    os.path.join(sys.prefix, "lib", _site_packages_version, "site-packages")
+)
+_lib64_site_packages = os.path.abspath(
+    os.path.join(sys.prefix, "lib64", _site_packages_version, "site-packages")
+)
+# Remove the duplicate lib/ entry only when lib64/ is also on sys.path.
+# On standard CI Python installations, lib/ may be the only site-packages path;
+# removing it unconditionally would make installed dependencies unimportable.
+_has_lib64_site_packages = os.path.isdir(_lib64_site_packages) and any(
+    os.path.abspath(entry or os.getcwd()) == _lib64_site_packages
     for entry in sys.path
-    if os.path.abspath(entry or os.getcwd()) != _duplicate_site_packages
-]
+)
+if _has_lib64_site_packages:
+    sys.path[:] = [
+        entry
+        for entry in sys.path
+        if os.path.abspath(entry or os.getcwd()) != _duplicate_site_packages
+    ]
+
+# Support direct execution as ".venv/bin/python jobs/batch_score.py" by
+# explicitly adding the repository root before importing the scorer package.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
 import boto3
 import mlflow
