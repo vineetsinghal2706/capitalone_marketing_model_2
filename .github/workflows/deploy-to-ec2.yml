@@ -44,7 +44,7 @@ jobs:
 
       - name: Run unit and smoke tests
         run: |
-          pytest -q
+          python -m pytest -q
 
   deploy:
     name: Deploy repository to EC2
