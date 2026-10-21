@@ -10,7 +10,7 @@ Airflow UI / scheduler on your local computer
   |
   | DAG 1 uses SsmRunCommandOperator
   v
-EC2: source /etc/capitalone-marketing.env
+EC2: retrieve Snowflake credentials from Secrets Manager using instance role
   -> jobs/snowflake_to_s3.py (PySpark Snowflake connector)
   -> S3 raw/{run_date}/
   |
@@ -27,38 +27,43 @@ EC2: jobs/batch_score.py
 
 No AWS Glue jobs are called. Each SSM task waits for its remote script to finish. Failed extraction prevents DAG 1 from triggering preprocessing; failed preprocessing prevents DAG 2 from triggering scoring.
 
-## 1. Snowflake environment file on EC2
+## 1. Snowflake credentials in AWS Secrets Manager
 
-On the EC2 instance, create/edit:
+The extraction job retrieves credentials from your existing AWS Secrets Manager secret at runtime. It no longer reads a Snowflake password from `/etc/capitalone-marketing.env`, and the password is never passed in the SSM command or stored in this repository.
 
-```bash
-sudo nano /etc/capitalone-marketing.env
+### Secret format
+
+The secret's **SecretString** must be a JSON object. Common lowercase keys or the uppercase `SNOWFLAKE_*` names are supported. Example structure only—keep your real values in Secrets Manager:
+
+```json
+{
+  "account": "your_snowflake_account_identifier",
+  "username": "your_snowflake_username",
+  "password": "your_snowflake_password",
+  "warehouse": "your_warehouse",
+  "database": "INGEST_DATA",
+  "schema": "PUBLIC",
+  "role": "your_read_role"
+}
 ```
 
-The file should contain your actual values, not placeholders:
+The `account` value may be an account identifier or a Snowflake hostname. An optional `url` key can supply the full host. Do not put actual credentials in README files, GitHub Actions variables, or DAG configuration.
 
-```bash
-export SNOWFLAKE_ACCOUNT="your_account_identifier_or_host"
-export SNOWFLAKE_USER="your_username"
-export SNOWFLAKE_PASSWORD="your_password"
-export SNOWFLAKE_WAREHOUSE="your_warehouse"
-export SNOWFLAKE_DATABASE="INGEST_DATA"
-export SNOWFLAKE_SCHEMA="PUBLIC"
-export SNOWFLAKE_ROLE="your_read_role"
-export S3_BUCKET="bank-marketing-ml-poc-vineet"
-export AWS_REGION="us-east-1"
-```
+### Tell local Airflow which existing secret to use
 
-Secure it:
+In the **local Airflow UI**, open **Admin → Variables** and create:
 
-```bash
-sudo chown root:root /etc/capitalone-marketing.env
-sudo chmod 600 /etc/capitalone-marketing.env
-```
+- **Key:** `snowflake_secret_id`
+- **Value:** the name or ARN of your existing Secrets Manager secret
 
-DAG 1 sources this file on EC2 before executing the extraction script. The SSM agent normally executes Run Command shell scripts as root on Linux, which can read this root-owned file. Do not echo the file, include it in SSM arguments, or commit it to GitHub. Root/EC2 administrators can still read the credentials; use a managed secret store if your security requirements call for it.
+This is only the secret identifier, not the password. DAG 1 passes the identifier to EC2; credentials are retrieved by the EC2 instance role.
 
-The extraction script supports `SNOWFLAKE_ACCOUNT` as an account identifier or hostname; if a full `snowflakecomputing.com` hostname is supplied, it won't append the suffix again. `SNOWFLAKE_URL` can optionally provide an explicit host.
+### EC2 IAM permissions
+
+Attach a least-privilege policy to the EC2 instance role allowing `secretsmanager:GetSecretValue` on that specific secret ARN. If the secret uses a customer-managed KMS key, the role may also need `kms:Decrypt` for that key. Keep the existing S3 permissions for the pipeline. The AWS identity used by local Airflow still needs its existing SSM permissions; it does not need permission to read the Snowflake secret.
+
+Remove the old Snowflake username/password from `/etc/capitalone-marketing.env` once you've confirmed the new path works. If that file is still needed for unrelated settings, do not keep the Snowflake password in it. Rotate the password if it was ever committed to GitHub or otherwise exposed.
+
 
 ## 2. Local Airflow configuration
 
@@ -135,7 +140,7 @@ Verify the database/schema/table and the columns exist in your Snowflake environ
 
 - **DAG fails to import:** check local Airflow provider packages and scheduler logs.
 - **SSM command cannot start:** check the local `aws_default` connection's IAM permissions, EC2 managed-node online status, and region/instance ID.
-- **Environment file missing/unreadable:** check `/etc/capitalone-marketing.env` exists on EC2 and its permissions allow the SSM command's execution user to read it.
+- **Secrets Manager access denied:** verify the Airflow Variable `snowflake_secret_id`, secret region, EC2 instance-role `secretsmanager:GetSecretValue` permission, and KMS decrypt permission if applicable.
 - **Snowflake login/network failure:** verify account host, credentials, network policy/private routing/IP allowlisting, warehouse, role and grants.
 - **S3 AccessDenied:** check the EC2 instance role and bucket policy.
 - **Connector download failure:** check outbound Maven access or preinstall connector/JDBC jars.
