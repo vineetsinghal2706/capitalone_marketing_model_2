@@ -19,17 +19,24 @@ def test_scorer_import_smoke():
     assert result.returncode == 0, result.stderr
 
 
-def test_batch_scoring_cli_help_smoke():
-    result = subprocess.run(
-        [sys.executable, "jobs/batch_score.py", "--help"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    for option in ("--run-date", "--input-s3", "--output-s3", "--metrics-s3"):
-        assert option in result.stdout
+def test_job_cli_help_smoke():
+    """All pipeline job entrypoints should parse CLI help without AWS calls."""
+    checks = [
+        ("jobs/snowflake_to_s3.py", ["--run-date"]),
+        ("jobs/preprocessing.py", ["--run-date"]),
+        ("jobs/batch_score.py", ["--run-date", "--input-s3", "--output-s3", "--metrics-s3"]),
+    ]
+    for script, expected_options in checks:
+        result = subprocess.run(
+            [sys.executable, script, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=45,
+            check=False,
+        )
+        assert result.returncode == 0, f"{script}: {result.stderr}"
+        for option in expected_options:
+            assert option in result.stdout, f"{script} missing {option}"
 
 
 def test_required_pipeline_files_exist():
