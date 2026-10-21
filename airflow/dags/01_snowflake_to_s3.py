@@ -9,6 +9,7 @@ local_tz = pendulum.timezone("Asia/Kolkata")
 AWS_REGION = "us-east-1"
 EC2_INSTANCE_ID = "i-06ea3e388448b991c"
 APP_DIR = "/opt/capitalone_marketing_model"
+SPARK_TMP_DIR = "/var/tmp/spark-tmp"
 
 
 with DAG(
@@ -37,11 +38,23 @@ cd {APP_DIR}
 test -x .venv/bin/python
 test -f jobs/snowflake_to_s3.py
 
+# /tmp is a small RAM-backed tmpfs on this EC2 instance.
+# Put Spark, JVM, and Python temporary files on the disk-backed root volume.
+mkdir -p {SPARK_TMP_DIR}
+chmod 700 {SPARK_TMP_DIR}
+export TMPDIR={SPARK_TMP_DIR}
+export SPARK_LOCAL_DIRS={SPARK_TMP_DIR}
+export SPARK_TMP_DIR={SPARK_TMP_DIR}
+export SPARK_SUBMIT_OPTS="\${SPARK_SUBMIT_OPTS:-} -Djava.io.tmpdir={SPARK_TMP_DIR}"
+
 export AWS_DEFAULT_REGION={AWS_REGION}
 RUN_DATE="{{{{ dag_run.conf.get('run_date', ds) }}}}"
 
 echo "Starting Snowflake-to-S3 extraction for $RUN_DATE on EC2"
-.venv/bin/python jobs/snowflake_to_s3.py --run-date "$RUN_DATE"
+echo "Spark temporary directory: $SPARK_TMP_DIR"
+df -hT / /tmp {SPARK_TMP_DIR}
+
+.venv/bin/python -u jobs/snowflake_to_s3.py --run-date "$RUN_DATE"
 echo "Snowflake-to-S3 extraction completed for $RUN_DATE"
 """
                 ]
