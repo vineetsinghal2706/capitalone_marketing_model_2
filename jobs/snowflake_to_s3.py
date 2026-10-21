@@ -94,10 +94,10 @@ def load_snowflake_secret():
 def snowflake_options():
     secret = load_snowflake_secret()
     account = _secret_value(
-        secret, "account", "SNOWFLAKE_ACCOUNT", "snowflake_account", "url", "SNOWFLAKE_URL"
+        secret, "account", "SNOWFLAKE_ACCOUNT", "snowflake_account", "accountIdentifier", "url", "SNOWFLAKE_URL", "sfURL"
     )
     url = _secret_value(
-        secret, "url", "SNOWFLAKE_URL", required=False, default=account
+        secret, "url", "SNOWFLAKE_URL", "sfURL", required=False, default=account
     )
     if not url.startswith(("http://", "https://")) and "snowflakecomputing.com" not in url:
         url = f"{url}.snowflakecomputing.com"
@@ -105,23 +105,23 @@ def snowflake_options():
 
     options = {
         "sfURL": url,
-        "sfUser": _secret_value(secret, "username", "user", "SNOWFLAKE_USER", "SNOWFLAKE_USERNAME"),
-        "sfPassword": _secret_value(secret, "password", "SNOWFLAKE_PASSWORD"),
+        "sfUser": _secret_value(secret, "username", "user", "SNOWFLAKE_USER", "SNOWFLAKE_USERNAME", "sfUser"),
+        "sfPassword": _secret_value(secret, "password", "SNOWFLAKE_PASSWORD", "sfPassword"),
         "sfDatabase": _secret_value(
-            secret, "database", "SNOWFLAKE_DATABASE", required=False,
+            secret, "database", "dbname", "SNOWFLAKE_DATABASE", "sfDatabase", required=False,
             default=os.getenv("SNOWFLAKE_DATABASE", "INGEST_DATA")
         ),
         "sfSchema": _secret_value(
-            secret, "schema", "SNOWFLAKE_SCHEMA", required=False,
+            secret, "schema", "schemaname", "SNOWFLAKE_SCHEMA", "sfSchema", required=False,
             default=os.getenv("SNOWFLAKE_SCHEMA", "PUBLIC")
         ),
         "sfWarehouse": _secret_value(
-            secret, "warehouse", "SNOWFLAKE_WAREHOUSE"
+            secret, "warehouse", "SNOWFLAKE_WAREHOUSE", "sfWarehouse"
         ),
         "query": os.getenv("SNOWFLAKE_QUERY", SNOWFLAKE_QUERY).strip(),
     }
     role = _secret_value(
-        secret, "role", "SNOWFLAKE_ROLE", required=False,
+        secret, "role", "SNOWFLAKE_ROLE", "sfRole", required=False,
         default=os.getenv("SNOWFLAKE_ROLE")
     )
     if role:
