@@ -33,6 +33,12 @@ if _has_lib64_site_packages:
         if os.path.abspath(entry or os.getcwd()) != _duplicate_site_packages
     ]
 
+# Support direct execution as ".venv/bin/python jobs/batch_score.py" by
+# explicitly adding the repository root before importing the scorer package.
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 import boto3
 import mlflow
 import pandas as pd
