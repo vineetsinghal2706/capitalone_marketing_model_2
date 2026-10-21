@@ -9,7 +9,7 @@ The GitHub Actions workflow runs these checks in a validation job before the EC2
 - Synthetic sample-score regression compares score, prediction, and probability to checked-in expected values when approved reference scores have been supplied.
 
 ## Score parity is intentionally not misrepresented
-The repository does not currently include an independent original-model/reference scorer output file. Expected scores must come from the modeling-team-approved reference implementation or trusted score output, not from the same implementation under test. Until those expected values are supplied, the score-parity test is skipped rather than falsely reported as passed. Once expected values are added to `tests/fixtures/score_parity.json`, any score mismatch fails validation and blocks EC2 deployment.
+The repository does not currently include an independent original-model/reference scorer output file. Expected scores must come from the modeling-team-approved reference implementation or trusted score output, not from the same implementation under test. Until those expected values are supplied, the score-parity test fails deliberately and blocks deployment. Once expected values are added to `tests/fixtures/score_parity.json`, any score mismatch fails validation and blocks EC2 deployment.
 
 Run locally:
 
